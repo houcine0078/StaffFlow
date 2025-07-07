@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employé Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        function toggleDropdown() {
+            var menu = document.getElementById('userDropdown');
+            menu.classList.toggle('hidden');
+        }
+        document.addEventListener('click', function(event) {
+            var dropdown = document.getElementById('userDropdown');
+            var avatar = document.getElementById('avatarBtn');
+            if (dropdown && !dropdown.contains(event.target) && !avatar.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        let currentSection = null;
+        function toggleSection(section) {
+            const dashboard = document.getElementById('dashboardContent');
+            if (currentSection === section) {
+                dashboard.innerHTML = '';
+                currentSection = null;
+                return;
+            }
+            currentSection = section;
+            if (section === 'messages') {
+                dashboard.innerHTML = `
+                    <div class="bg-white rounded shadow p-8 mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Vos messages</h3>
+                        {% if messages_recus %}
+                            <ul>
+                            {% for msg in messages_recus %}
+                                <li class="mb-2 border-b pb-2 text-left">
+                                    <span class="font-semibold">De :</span> {{ msg.expediteur.first_name }} {{ msg.expediteur.last_name }}<br>
+                                    <span class="font-semibold">Sujet :</span> {{ msg.sujet }}<br>
+                                    <span class="font-semibold">Message :</span> {{ msg.contenu }}<br>
+                                    <span class="text-xs text-gray-500">{{ msg.date_envoi|date:"d/m/Y H:i" }}</span>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">Aucun message.</p>
+                        {% endif %}
+                    </div>
+                `;
+            } else if (section === 'demandes') {
+                dashboard.innerHTML = `
+                    <div class="bg-white rounded shadow p-8 mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Postuler une demande de congé</h3>
+                        <form method="post" action="{% url 'postuler_conge' %}" class="space-y-4">
+                            {% csrf_token %}
+                            <div>
+                                <label class="block font-semibold mb-1" for="date_debut">Date de début :</label>
+                                <input type="date" id="date_debut" name="date_debut" required class="w-full px-2 py-1 border rounded focus:outline-none focus:ring focus:border-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1" for="date_fin">Date de fin :</label>
+                                <input type="date" id="date_fin" name="date_fin" required class="w-full px-2 py-1 border rounded focus:outline-none focus:ring focus:border-indigo-400">
+                            </div>
+                            <div>
+                                <label class="block font-semibold mb-1" for="motif">Motif :</label>
+                                <textarea id="motif" name="motif" rows="2" required class="w-full px-2 py-1 border rounded focus:outline-none focus:ring focus:border-indigo-400"></textarea>
+                            </div>
+                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Envoyer la demande</button>
+                        </form>
+                        <hr class="my-6">
+                        <h4 class="text-md font-semibold mb-2">Mes demandes de congé</h4>
+                        {% if demandes_conge %}
+                            <ul>
+                                {% for demande in demandes_conge %}
+                                    <li class="mb-2 border-b pb-2 text-left">
+                                        <span class="font-semibold">Du :</span> {{ demande.date_debut }} <span class="font-semibold">au</span> {{ demande.date_fin }}<br>
+                                        <span class="font-semibold">Motif :</span> {{ demande.motif }}<br>
+                                        <span class="font-semibold">Statut :</span>
+                                        {% if demande.statut == 'EN_ATTENTE' %}
+                                            <span class="text-yellow-600 font-semibold">En attente</span>
+                                        {% elif demande.statut == 'VALIDE' or demande.statut == 'APPROUVEE' %}
+                                            <span class="text-green-600 font-semibold">Validée</span>
+                                        {% elif demande.statut == 'REFUSE' or demande.statut == 'REFUSEE' %}
+                                            <span class="text-red-600 font-semibold">Refusée</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">Aucune demande de congé.</p>
+                        {% endif %}
+                    </div>
+                `;
+            } else if (section === 'reponses_conge') {
+                dashboard.innerHTML = `
+                    <div class="bg-white rounded shadow p-8 mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Mes réponses de congé</h3>
+                        {% if demandes_conge %}
+                            <ul>
+                            {% for demande in demandes_conge %}
+                                {% if demande.statut != 'EN_ATTENTE' %}
+                                <li class="mb-2 border-b pb-2 text-left">
+                                    <span class="font-semibold">Du :</span> {{ demande.date_debut }} <span class="font-semibold">au</span> {{ demande.date_fin }}<br>
+                                    <span class="font-semibold">Motif :</span> {{ demande.motif }}<br>
+                                    <span class="font-semibold">Réponse :</span>
+                                    {% if demande.statut == 'APPROUVEE' or demande.statut == 'VALIDE' %}
+                                        <span class="text-green-600 font-semibold">Acceptée</span>
+                                    {% elif demande.statut == 'REFUSEE' or demande.statut == 'REFUSE' %}
+                                        <span class="text-red-600 font-semibold">Refusée</span>
+                                    {% endif %}
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">Aucune réponse de congé pour le moment.</p>
+                        {% endif %}
+                    </div>
+                `;
+            } else if (section === 'taches') {
+                dashboard.innerHTML = `
+                    <div class="bg-white rounded shadow p-8 mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Suivre les tâches assignées</h3>
+                        {% if taches_assignees %}
+                            <ul>
+                            {% for tache in taches_assignees %}
+                                 <li class="mb-2 border-b pb-2 text-left">
+                                <span class="font-semibold">Titre :</span> {{ tache.titre }}<br>
+                                 <span class="font-semibold">Description :</span> {{ tache.description }}<br>
+                                 <span class="font-semibold">Date d'échéance :</span> {{ tache.date_echeance }}<br>
+                                 <span class="font-semibold">Statut :</span>
+                                 {% if tache.est_terminee %}
+                                 <span class="text-green-600 font-semibold">Terminée</span>
+                                {% else %}
+                                 <span class="text-yellow-600 font-semibold">En cours</span>
+                                <form method="post" action="{% url 'valider_tache' tache.id %}" style="display:inline;">
+                                {% csrf_token %}
+                <button type="submit" class="ml-2 bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 text-xs">Valider</button>
+             </form>
+        {% endif %}
+    </li>
+                       {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-gray-500">Aucune tâche assignée.</p>
+                        {% endif %}
+                    </div>
+                `;
+            } else if (section === 'evaluations') {
+                dashboard.innerHTML = `
+                    <div class="bg-white rounded shadow p-8 mb-8">
+                        <h3 class="text-lg font-semibold mb-4">Mes évaluations</h3>
+                        {% if current_user.note or current_user.commentaire %}
+                            <div class="mb-2 text-left">
+                                <span class="font-semibold">Note :</span> {{ current_user.note|default:"-" }}/10<br>
+                                <span class="font-semibold">Commentaire :</span> {{ current_user.commentaire|default:"-" }}
+                            </div>
+                        {% else %}
+                            <p class="text-gray-500">Aucune évaluation pour le moment.</p>
+                        {% endif %}
+                    </div>
+                `;
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-indigo-600 text-white py-4 shadow-md">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Employé Dashboard</h1>
+            <div class="flex items-center gap-6">
+                <!-- Consulter mes réponses de congé Button -->
+                <button onclick="toggleSection('reponses_conge')" class="flex items-center gap-2 group focus:outline-none">
+                    <svg class="w-7 h-7 text-white group-hover:text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2z"/>
+                    </svg>
+                    <span class="font-semibold text-white group-hover:text-indigo-200">Consulter mes réponses de congé</span>
+                </button>
+                <!-- Messages Button -->
+                <button onclick="toggleSection('messages')" class="flex items-center gap-2 group focus:outline-none">
+                    <svg class="w-7 h-7 text-white group-hover:text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+                    </svg>
+                    <span class="font-semibold text-white group-hover:text-indigo-200">Messages</span>
+                </button>
+                <!-- Postuler les demandes Button -->
+                <button onclick="toggleSection('demandes')" class="flex items-center gap-2 group focus:outline-none">
+                    <svg class="w-7 h-7 text-white group-hover:text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="font-semibold text-white group-hover:text-indigo-200">Postuler les demandes</span>
+                </button>
+                <!-- Suivre les tâches assignées Button -->
+                <button onclick="toggleSection('taches')" class="flex items-center gap-2 group focus:outline-none">
+                    <svg class="w-7 h-7 text-white group-hover:text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2l4-4M7 20h10a2 2 0 002-2V6a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="font-semibold text-white group-hover:text-indigo-200">Suivre les tâches</span>
+                </button>
+                <!-- Consulter mes évaluations Button -->
+                <button onclick="toggleSection('evaluations')" class="flex items-center gap-2 group focus:outline-none">
+                    <svg class="w-7 h-7 text-white group-hover:text-indigo-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 7v-6m0 6H5a2 2 0 01-2-2V7m17 12a2 2 0 002-2V7a2 2 0 00-2-2h-7"/>
+                    </svg>
+                    <span class="font-semibold text-white group-hover:text-indigo-200">Consulter mes évaluations</span>
+                </button>
+                <!-- User Dropdown -->
+                <div class="relative flex items-center ml-6">
+                    <button id="avatarBtn" type="button"
+                        onclick="toggleDropdown()"
+                        class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-400 to-indigo-700 flex items-center justify-center text-lg font-bold focus:outline-none shadow-lg border-2 border-white">
+                        <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/>
+                        </svg>
+                    </button>
+                    <div id="userDropdown"
+                        class="hidden absolute right-0 mt-96 w-80 bg-white rounded-xl shadow-2xl py-4 z-50 text-gray-900 transition-all duration-200">
+                        <div class="flex flex-col items-center px-6 py-4 border-b">
+                            <div class="w-16 h-16 rounded-full bg-indigo-200 flex items-center justify-center text-3xl font-bold mb-2 text-indigo-700 shadow">
+                                {{ current_user.first_name|default:current_user.username|slice:":1" }}{{ current_user.last_name|slice:":1" }}
+                            </div>
+                            <div class="font-bold text-lg mb-1">{{ current_user.first_name }} {{ current_user.last_name }}</div>
+                            <div class="text-sm text-gray-600 mb-2">{{ current_user.email }}</div>
+                            <span class="inline-block bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded">{{ current_user.role }}</span>
+                        </div>
+                        <div class="px-6 py-4 space-y-1">
+                            <form method="post" action="{% url 'update_profile' %}">
+                                {% csrf_token %}
+                                <div class="mb-2">
+                                    <label class="font-semibold block mb-1" for="telephone">Téléphone:</label>
+                                    <input type="text" id="telephone" name="telephone" value="{{ current_user.telephone|default:'' }}"
+                                        class="w-full px-2 py-1 border rounded focus:outline-none focus:ring focus:border-indigo-400 text-sm">
+                                </div>
+                                <div class="mb-2">
+                                    <label class="font-semibold block mb-1" for="adresse">Adresse:</label>
+                                    <input type="text" id="adresse" name="adresse" value="{{ current_user.adresse|default:'' }}"
+                                        class="w-full px-2 py-1 border rounded focus:outline-none focus:ring focus:border-indigo-400 text-sm">
+                                </div>
+                                <button type="submit" class="mt-2 bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700 text-sm">
+                                    Enregistrer
+                                </button>
+                            </form>
+                            <div><span class="font-semibold">Date d'embauche:</span> {{ current_user.date_embauche|default:"-" }}</div>
+                        </div>
+                        <div class="px-6 py-2 border-t text-center">
+                            <a href="{% url 'logout' %}" class="text-red-600 hover:underline font-semibold">Déconnexion</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content area for button results -->
+    <div id="dashboardContent" class="container mx-auto px-4 mt-8"></div>
+
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">Bienvenue, {{ current_user.first_name }} !</h2>
+        <div class="bg-white rounded shadow p-8 text-center mb-8">
+            <p class="text-lg text-gray-700">Ceci est votre tableau de bord employé.</p>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-sm">&copy; 2025 Système de gestion des employés. Tous droits réservés.</p>
+        </div>
+    </footer>
+</body>
+</html>

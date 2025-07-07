@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Envoyer un message</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded shadow p-8 w-full max-w-md">
+        <h2 class="text-xl font-bold mb-4">Envoyer un message à {{ destinataire.first_name }} {{ destinataire.last_name }}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <input type="text" name="sujet" class="w-full border rounded p-2 mb-2" placeholder="Sujet" required>
+            <textarea name="contenu" rows="5" class="w-full border rounded p-2 mb-4" placeholder="Votre message..." required></textarea>
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Envoyer</button>
+        </form>
+    </div>
+</body>
+</html>

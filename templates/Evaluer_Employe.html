@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Évaluer un employé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <main class="container mx-auto px-4 py-8 flex-grow">
+        <div class="bg-white rounded shadow p-8 max-w-lg mx-auto">
+            <h2 class="text-xl font-bold mb-6">Évaluer {{ employe.first_name }} {{ employe.last_name }}</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block font-semibold mb-1" for="note">Note (sur 10) :</label>
+                    <input type="number" min="0" max="10" id="note" name="note" required class="w-full px-2 py-1 border rounded">
+                </div>
+                <div class="mb-4">
+                    <label class="block font-semibold mb-1" for="commentaire">Commentaire :</label>
+                    <textarea id="commentaire" name="commentaire" rows="3" class="w-full px-2 py-1 border rounded"></textarea>
+                </div>
+                <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Enregistrer</button>
+                <a href="{% url 'rh_page' %}" class="ml-4 text-gray-600 hover:underline">Annuler</a>
+            </form>
+        </div>
+    </main>
+</body>
+</html>
